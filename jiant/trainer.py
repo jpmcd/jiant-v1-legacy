@@ -13,7 +13,8 @@ import numpy as np
 import torch
 from allennlp.common import Params  # pylint: disable=import-error
 from allennlp.common.checks import ConfigurationError  # pylint: disable=import-error
-from allennlp.data.iterators import BasicIterator, BucketIterator  # pylint: disable=import-error
+# from allennlp.data.iterators import BasicIterator, BucketIterator  # pylint: disable=import-error
+from torch.utils.data import DataLoader
 from allennlp.training.learning_rate_schedulers import (  # pylint: disable=import-error
     LearningRateScheduler,
 )
@@ -332,15 +333,20 @@ class SamplingMultiTaskTrainer:
             for field in pad_dict:
                 for pad_field in pad_dict[field]:
                     sorting_keys.append((field, pad_field))
-            iterator = BucketIterator(
-                sorting_keys=sorting_keys,
-                max_instances_in_memory=10000,
+            # iterator = BucketIterator(
+            #     sorting_keys=sorting_keys,
+            #     max_instances_in_memory=10000,
+            #     batch_size=batch_size,
+            #     biggest_batch_first=True,
+            # )
+            # task_info["iterator"] = iterator
+            # task_info["tr_generator"] = iterator(
+            #     task.get_instance_iterable(split_name="train", phase=phase), num_epochs=None
+            # )
+            task_info["tr_generator"] = DataLoader(
+                task.get_instance_iterable(split_name="train", phase=phase),
                 batch_size=batch_size,
-                biggest_batch_first=True,
-            )
-            task_info["iterator"] = iterator
-            task_info["tr_generator"] = iterator(
-                task.get_instance_iterable(split_name="train", phase=phase), num_epochs=None
+                shuffle=True,
             )
 
             n_training_examples = task.n_train_examples
@@ -843,13 +849,17 @@ class SamplingMultiTaskTrainer:
             max_data_points = min(task.n_val_examples, self._val_data_limit)
         else:
             max_data_points = task.n_val_examples
-        val_generator = BasicIterator(batch_size, instances_per_epoch=max_data_points)(
-            task.get_instance_iterable(split_name="val"), num_epochs=1, shuffle=False
+        # val_generator = BasicIterator(batch_size, instances_per_epoch=max_data_points)(
+        #     task.get_instance_iterable(split_name="val"), num_epochs=1, shuffle=False
+        # )
+        val_generator = DataLoader(
+            task.get_instance_iterable(split_name="val"), batch_size=batch_size, shuffle=False
         )
         n_val_batches = math.ceil(max_data_points / batch_size)
         all_val_metrics["%s_loss" % task.name] = 0.0
 
-        for batch in val_generator:
+        # for batch in val_generator:
+        for batch in itertools.islice(val_generator, n_val_batches):
             batch_num += 1
             with torch.no_grad():
                 out = self._forward(batch, task=task)
