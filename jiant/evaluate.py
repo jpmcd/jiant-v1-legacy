@@ -10,7 +10,8 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import pandas as pd
 import torch
 from allennlp.nn.util import move_to_device
-from allennlp.data.iterators import BasicIterator
+# from allennlp.data.iterators import BasicIterator
+from torch.utils.data import DataLoader
 from jiant import tasks as tasks_module
 from jiant.tasks.tasks import (
     BooleanQuestionTask,
@@ -82,7 +83,7 @@ def evaluate(
         + tasks_module.ALL_COLA_NPI_TASKS
     )
     model.eval()
-    iterator = BasicIterator(batch_size)
+    # iterator = BasicIterator(batch_size)
 
     all_metrics = {"micro_avg": 0.0, "macro_avg": 0.0}
     all_preds = {}
@@ -95,7 +96,8 @@ def evaluate(
         n_task_examples = 0
         task_preds = []  # accumulate DataFrames
         assert split in ["train", "val", "test"]
-        generator = iterator(task.get_instance_iterable(split), num_epochs=1, shuffle=False)
+        # generator = iterator(task.get_instance_iterable(split), num_epochs=1, shuffle=False)
+        generator = DataLoader(task.get_instance_iterable(split), batch_size=batch_size, shuffle=False)
         for batch_idx, batch in enumerate(generator):
             with torch.no_grad():
                 if isinstance(cuda_device, int):

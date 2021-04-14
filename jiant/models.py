@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
 from allennlp.common import Params
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder as s2s_e
-from allennlp.modules.seq2seq_encoders import StackedSelfAttentionEncoder
+# from allennlp.modules.seq2seq_encoders import StackedSelfAttentionEncoder
 from allennlp.modules.seq2vec_encoders import CnnEncoder
 from allennlp.modules.token_embedders import Embedding, TokenCharactersEncoder
 from allennlp.training.metrics import Average
