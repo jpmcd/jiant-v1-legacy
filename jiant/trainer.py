@@ -11,10 +11,10 @@ import time
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from allennlp.common import Params  # pylint: disable=import-error
 from allennlp.common.checks import ConfigurationError  # pylint: disable=import-error
 # from allennlp.data.iterators import BasicIterator, BucketIterator  # pylint: disable=import-error
-from torch.utils.data import DataLoader
 from allennlp.training.learning_rate_schedulers import (  # pylint: disable=import-error
     LearningRateScheduler,
 )
@@ -27,6 +27,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from jiant.evaluate import evaluate
 from jiant.tasks.seq2seq import Seq2SeqTask
 from jiant.utils import config
+from jiant.utils.data_loaders import BasicIterableDataset
 from jiant.utils.utils import (
     assert_for_log,
     find_last_checkpoint_epoch,
@@ -343,10 +344,13 @@ class SamplingMultiTaskTrainer:
             # task_info["tr_generator"] = iterator(
             #     task.get_instance_iterable(split_name="train", phase=phase), num_epochs=None
             # )
+            tr_dataset = BasicIterableDataset(
+                task.get_instance_iterable(split_name="train", phase=phase)
+            )
             task_info["tr_generator"] = DataLoader(
-                task.get_instance_iterable(split_name="train", phase=phase),
+                tr_dataset,
                 batch_size=batch_size,
-                shuffle=True,
+                # shuffle=True,
             )
 
             n_training_examples = task.n_train_examples
@@ -852,9 +856,8 @@ class SamplingMultiTaskTrainer:
         # val_generator = BasicIterator(batch_size, instances_per_epoch=max_data_points)(
         #     task.get_instance_iterable(split_name="val"), num_epochs=1, shuffle=False
         # )
-        val_generator = DataLoader(
-            task.get_instance_iterable(split_name="val"), batch_size=batch_size, shuffle=False
-        )
+        val_dataset = task.get_instance_iterable(split_name="val")
+        val_generator = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         n_val_batches = math.ceil(max_data_points / batch_size)
         all_val_metrics["%s_loss" % task.name] = 0.0
 

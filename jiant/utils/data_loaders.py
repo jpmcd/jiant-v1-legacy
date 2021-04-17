@@ -9,10 +9,20 @@ import json
 import numpy as np
 import pandas as pd
 from allennlp.data import vocabulary
+from torch.utils.data import IterableDataset
 
 from jiant.utils.tokenizers import get_tokenizer
 from jiant.utils.retokenize import realign_spans
 
+
+class BasicIterableDataset(IterableDataset):
+    def __init__(self, iterable):
+        super(MoreIterableDataset).__init__()
+        self.iterable = iterable
+
+    def __iter__(self):
+        return iter(self.iterable)
+        
 
 def load_span_data(tokenizer_name, file_name, label_fn=None, has_labels=True):
     """
