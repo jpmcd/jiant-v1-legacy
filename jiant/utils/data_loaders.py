@@ -17,7 +17,7 @@ from jiant.utils.retokenize import realign_spans
 
 class BasicIterableDataset(IterableDataset):
     def __init__(self, iterable):
-        super(MoreIterableDataset).__init__()
+        super(BasicIterableDataset).__init__()
         self.iterable = iterable
 
     def __iter__(self):
